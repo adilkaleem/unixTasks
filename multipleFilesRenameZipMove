@@ -1,0 +1,52 @@
+#!/bin/sh
+
+workingDirTemp=$1
+targetDir=$2
+userInputFileName=$3
+feedts=$4
+finalFileSize=$5
+category=$6
+feed=$7
+
+fileName=combinedFile.csv
+
+##################################################################
+############### Splitting files based on Size & Renaming #########
+
+fn_merge_on_size()
+{
+dir=$1
+finalFileSize=$2
+fileName=$3
+
+for files in `find ${dir}/ -size +0c -type f`
+do
+        if [[ -r $files ]]
+        then
+                cat $files >> ${workingDirTemp}/${fileName}
+        else
+                echo "Corrupt Files"
+                exit 1
+        fi
+done
+
+cd ${workingDirTemp}
+split --line-bytes=${finalFileSize} ${fileName} --numeric-suffixes -e --additional-suffix=.csv ${userInputFileName}_${category}_${feed}_${feedts}_
+}
+
+fn_merge_on_size ${workingDirTemp} ${finalFileSize} ${fileName}
+
+# zip files
+for i in `ls -pL ${workingDirTemp}/ | grep -v gz | grep -v ${fileName}`
+do
+gzip ${workingDirTemp}/${i}
+done
+
+# Move files
+for i in `ls -pL ${workingDirTemp} | grep -v / | grep -v ${fileName}`
+do
+mv ${workingDirTemp}/${i} ${targetDir}/${i}
+done
+
+# Remove temporary files created
+rm -f ${workingDirTemp}/${fileName}
