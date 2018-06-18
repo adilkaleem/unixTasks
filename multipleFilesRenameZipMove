@@ -1,52 +1,57 @@
 #!/bin/sh
 
-workingDirTemp=$1
+workingDir=$1
 targetDir=$2
 userInputFileName=$3
-feedts=$4
-finalFileSize=$5
-category=$6
-feed=$7
+finalFileSize=$4
+choiceOfName1=$5
+choiceOfName2=$6
 
-fileName=combinedFile_${category}_${feed}_${feedts}.csv
+fileName=combinedFile_${choiceOfName1}_${choiceOfName2}.csv
 
 ##################################################################
 ############### Splitting files based on Size & Renaming #########
 
+## Function for merge-split-rename files
 fn_merge_on_size()
 {
 dir=$1
 finalFileSize=$2
 fileName=$3
 
+## Traverse through files > 0 byte and merge the contents to one single file
 for files in `find ${dir}/ -size +0c -type f`
 do
         if [[ -r $files ]]
         then
-                cat $files >> ${workingDirTemp}/${fileName}
+                cat $files >> ${workingDir}/${fileName}
         else
                 echo "Corrupt Files"
                 exit 1
         fi
 done
 
-cd ${workingDirTemp}
-split --line-bytes=${finalFileSize} ${fileName} --numeric-suffixes -e --additional-suffix=.csv ${userInputFileName}_${category}_${feed}_${feedts}_
+## Split files based on size
+## Splitting won't break lines
+## Additional suffixes added in the end (before extension) are numeric. Extension is csv.
+## "choiceOfName1 & 2" are just file names; they could be ommitted/replaced with user choice names
+cd ${workingDir}
+split --line-bytes=${finalFileSize} ${fileName} --numeric-suffixes -e --additional-suffix=.csv ${userInputFileName}_${choiceOfName1}_${choiceOfName2}_
 }
 
-fn_merge_on_size ${workingDirTemp} ${finalFileSize} ${fileName}
+fn_merge_on_size ${workingDir} ${finalFileSize} ${fileName}
 
 # zip files
-for i in `ls -pL ${workingDirTemp}/ | grep -v gz | grep -v ${fileName}`
+for i in `ls -pL ${workingDir}/ | grep -v gz | grep -v ${fileName}`
 do
-gzip ${workingDirTemp}/${i}
+gzip --fast ${workingDir}/${i}
 done
 
 # Move files
-for i in `ls -pL ${workingDirTemp} | grep -v / | grep -v ${fileName}`
+for i in `ls -pL ${workingDir} | grep -v / | grep -v ${fileName}`
 do
-mv ${workingDirTemp}/${i} ${targetDir}/${i}
+mv ${workingDir}/${i} ${targetDir}/${i}
 done
 
 # Remove temporary files created
-rm -f ${workingDirTemp}/${fileName}
+rm -f ${workingDir}/${fileName}
