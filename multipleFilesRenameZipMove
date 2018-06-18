@@ -8,7 +8,7 @@ finalFileSize=$5
 category=$6
 feed=$7
 
-fileName=combinedFile.csv
+fileName=combinedFile_${category}_${feed}_${feedts}.csv
 
 ##################################################################
 ############### Splitting files based on Size & Renaming #########
