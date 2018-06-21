@@ -13,16 +13,19 @@ fileName=combinedFile_${choiceOfName1}_${choiceOfName2}.csv
 ############### Splitting files based on Size & Renaming #########
 
 ## Function for merge-split-rename files
-fn_merge_on_size()
+fn_merge_files_based_on_size()
 {
 dir=$1
 finalFileSize=$2
 fileName=$3
 
 ## Traverse through files > 0 byte and merge the contents to one single file
-for files in `find ${dir}/ -size +0c -type f`
+## -maxdepth 1 --> If the program shouldn't pick up directories inside ${dir}
+## $files =~ \.t?gz$ --> If there are zipped files that can't be read by cat
+
+for files in `find ${dir}/ -maxdepth 1 -size +0c -type f`
 do
-        if [[ -r $files ]]
+        if [[ -e $files && $files =~ \.t?gz$ ]]
         then
                 cat $files >> ${workingDir}/${fileName}
         else
@@ -39,7 +42,7 @@ cd ${workingDir}
 split --line-bytes=${finalFileSize} ${fileName} --numeric-suffixes -e --additional-suffix=.csv ${userInputFileName}_${choiceOfName1}_${choiceOfName2}_
 }
 
-fn_merge_on_size ${workingDir} ${finalFileSize} ${fileName}
+fn_merge_files_based_on_size ${workingDir} ${finalFileSize} ${fileName}
 
 # zip files
 for i in `ls -pL ${workingDir}/ | grep -v gz | grep -v ${fileName}`
